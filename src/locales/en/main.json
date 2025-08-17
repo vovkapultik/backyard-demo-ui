@@ -917,5 +917,19 @@
   "RpcModal-Save": "Save",
   "RpcModal-InputPlaceholder": "Enter the RPC URL",
   "RpcModal-InvalidRpc": "Please insert a valid RPC",
-  "RpcModal-EmptyList": "You can modify Beefy’s default RPC for each chain. Once modified, it will be used for the connection until it is removed."
+  "RpcModal-EmptyList": "You can modify Beefy's default RPC for each chain. Once modified, it will be used for the connection until it is removed.",
+  "CombinedPosition-Title": "Combined Position",
+  "CombinedPosition-AddVault": "Add to Combined Position",
+  "CombinedPosition-RemoveVault": "Remove from Combined Position",
+  "CombinedPosition-MaxVaults": "Maximum 3 vaults allowed",
+  "CombinedPosition-WrongNetwork": "Vault must be on same network",
+  "CombinedPosition-MultiLpNotAllowed": "Multi-LP vaults not supported",
+  "CombinedPosition-SelectAmount": "Select total amount to invest",
+  "CombinedPosition-Allocation": "Allocation",
+  "CombinedPosition-TotalAllocation": "Total allocation must equal 100%",
+  "CombinedPosition-Deposit": "Deposit into All Vaults",
+  "CombinedPosition-Clear": "Clear All",
+  "CombinedPosition-SelectedVaults": "Selected Vaults",
+  "CombinedPosition-NoVaults": "No vaults selected",
+  "CombinedPosition-AddVaultMessage": "Click + on vaults to add them to your combined position"
 }

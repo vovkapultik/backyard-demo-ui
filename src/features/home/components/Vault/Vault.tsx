@@ -15,6 +15,7 @@ import {
   type VaultEntity,
 } from '../../../data/entities/vault.ts';
 import { selectVaultById } from '../../../data/selectors/vaults.ts';
+import { AddToCombinedPositionButton } from './components/AddToCombinedPositionButton/AddToCombinedPositionButton.tsx';
 import { styles } from './styles.ts';
 
 const useStyles = legacyMakeStyles(styles);
@@ -32,21 +33,29 @@ export const Vault = memo(function Vault({ vaultId }: VaultProps) {
   const isGov = !isCowcentratedLikeVault(vault) && isGovVault(vault); // gov but not cowcentrated pool
 
   return (
-    <Link
-      to={`/vault/${vaultId}`}
+    <div
       className={css(
         styles.vault,
         isCowcentrated && styles.vaultCowcentrated,
         isCowcentratedPool && styles.vaultCowcentratedPool,
         isCowcentratedStandard && styles.vaultCowcentratedVault,
         isRetired && styles.vaultRetired,
-        isGov && styles.vaultEarnings
+        isGov && styles.vaultEarnings,
+        styles.vaultWithButton
       )}
     >
-      <div className={classes.vaultInner}>
-        <VaultIdentity vaultId={vaultId} />
-        <VaultStats vaultId={vaultId} />
+      <Link
+        to={`/vault/${vaultId}`}
+        className={css(styles.vaultLink)}
+      >
+        <div className={classes.vaultInner}>
+          <VaultIdentity vaultId={vaultId} />
+          <VaultStats vaultId={vaultId} />
+        </div>
+      </Link>
+      <div className={css(styles.vaultActions)}>
+        <AddToCombinedPositionButton vaultId={vaultId} />
       </div>
-    </Link>
+    </div>
   );
 });

@@ -9,6 +9,7 @@ import { articlesSlice } from './articles.ts';
 import { bridgesSlice } from './bridges.ts';
 import { beGemsReducer } from './campaigns/begems.ts';
 import { chainsSlice } from './chains.ts';
+import { combinedPositionReducer } from './combined-position.ts';
 import { dataLoaderSlice } from './data-loader.ts';
 import { feesSlice } from './fees.ts';
 import { bigNumberTransform, filteredVaultsSlice } from './filtered-vaults.ts';
@@ -84,6 +85,7 @@ const uiReducer = combineReducers({
   campaigns: combineReducers({
     begems: beGemsReducer,
   }),
+  combinedPosition: combinedPositionReducer,
   dataLoader: dataLoaderSlice.reducer,
   filteredVaults: persistReducer(
     {

@@ -7,6 +7,7 @@ import type { ArticlesState } from '../reducers/articles-types.ts';
 import type { BridgesState } from '../reducers/bridges-types.ts';
 import type { BeGemsState } from '../reducers/campaigns/begems-types.ts';
 import type { ChainsState } from '../reducers/chains-types.ts';
+import type { CombinedPositionState } from '../reducers/combined-position-types.ts';
 import type { DataLoaderState } from '../reducers/data-loader-types.ts';
 import type { FeesState } from '../reducers/fees-types.ts';
 import type { FilteredVaultsState } from '../reducers/filtered-vaults-types.ts';
@@ -72,6 +73,7 @@ export interface BeefyState {
   ui: {
     addToWallet: AddToWalletState;
     bridge: BridgeState;
+    combinedPosition: CombinedPositionState;
     dataLoader: DataLoaderState;
     filteredVaults: FilteredVaultsState;
     onRamp: OnRampTypes;
