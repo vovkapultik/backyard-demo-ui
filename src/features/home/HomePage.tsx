@@ -1,17 +1,29 @@
 import { styled } from '@repo/styles/jsx';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { Container } from '../../components/Container/Container.tsx';
 import { HomeMeta } from '../../components/Meta/HomeMeta.tsx';
-import { useAppSelector } from '../data/store/hooks.ts';
+import { useAppSelector, useAppDispatch } from '../data/store/hooks.ts';
 import { selectIsVaultListAvailable } from '../data/selectors/vaults-list.ts';
+import { filteredVaultsActions } from '../data/reducers/filtered-vaults.ts';
 import { Banners } from './components/Banners/Banners.tsx';
-import { Filters } from './components/Filters/Filters.tsx';
+import { ChainButtonFilter } from './components/Filters/components/ChainFilters/ChainButtonFilter.tsx';
 import { Loading } from './components/Loading/Loading.tsx';
 import { Portfolio } from './components/Portfolio/Portfolio.tsx';
 import { Vaults } from './components/Vaults/Vaults.tsx';
 
 const HomePage = memo(function HomePage() {
   const isVaultListAvailable = useAppSelector(selectIsVaultListAvailable);
+  const dispatch = useAppDispatch();
+
+  // Set hardcoded filter values: All, Stablecoins, Single, Vaults
+  useEffect(() => {
+    if (isVaultListAvailable) {
+      dispatch(filteredVaultsActions.setUserCategory('all')); // All
+      dispatch(filteredVaultsActions.setVaultCategory(['stable'])); // Stablecoins
+      dispatch(filteredVaultsActions.setAssetType(['single'])); // Single
+      dispatch(filteredVaultsActions.setStrategyType('vaults')); // Vaults
+    }
+  }, [dispatch, isVaultListAvailable]);
 
   if (!isVaultListAvailable) {
     return (
@@ -33,7 +45,9 @@ const HomePage = memo(function HomePage() {
       </Header>
       <Content>
         <Container maxWidth="lg">
-          <Filters />
+          <FiltersRow>
+            <ChainButtonFilter />
+          </FiltersRow>
         </Container>
         <Vaults />
       </Content>
@@ -53,6 +67,17 @@ const Content = styled('div', {
     sm: {
       paddingBlock: '32px',
     },
+  },
+});
+
+const FiltersRow = styled('div', {
+  base: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    height: '40px',
+    width: '100%',
+    marginBottom: '12px',
   },
 });
 
