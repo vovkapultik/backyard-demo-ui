@@ -931,5 +931,11 @@
   "CombinedPosition-Clear": "Clear All",
   "CombinedPosition-SelectedVaults": "Selected Vaults",
   "CombinedPosition-NoVaults": "No vaults selected",
-  "CombinedPosition-AddVaultMessage": "Click + on vaults to add them to your combined position"
+  "CombinedPosition-AddVaultMessage": "Click + on vaults to add them to your combined position",
+  "CombinedPosition-EmptyText": "No vaults selected. Click the + button on vault rows to add them.",
+  "CombinedPosition-LoadingQuotes": "Loading quotes...",
+  "CombinedPosition-InputAmount": "Input Amount",
+  "CombinedPosition-ExpectedOutput": "Expected Output",
+  "CombinedPosition-FetchingQuote": "Fetching quote...",
+  "CombinedPosition-QuoteReady": "Quote ready"
 }

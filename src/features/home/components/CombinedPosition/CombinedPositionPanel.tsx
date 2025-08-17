@@ -7,9 +7,6 @@ import { combinedPositionActions } from '../../../data/reducers/combined-positio
 import {
   selectCombinedPositionSelectedVaults,
   selectCombinedPositionVaultCount,
-  selectCombinedPositionChainId,
-  selectCombinedPositionTotalAmount,
-  selectCombinedPositionSelectedToken,
 } from '../../../data/selectors/combined-position.ts';
 import { CombinedPositionVaultList } from './components/CombinedPositionVaultList/CombinedPositionVaultList.tsx';
 import { CombinedPositionAmountInput } from './components/CombinedPositionAmountInput/CombinedPositionAmountInput.tsx';
@@ -20,9 +17,6 @@ export const CombinedPositionPanel = memo(function CombinedPositionPanel() {
   const dispatch = useAppDispatch();
   const selectedVaults = useAppSelector(selectCombinedPositionSelectedVaults);
   const vaultCount = useAppSelector(selectCombinedPositionVaultCount);
-  const chainId = useAppSelector(selectCombinedPositionChainId);
-  const totalAmount = useAppSelector(selectCombinedPositionTotalAmount);
-  const selectedToken = useAppSelector(selectCombinedPositionSelectedToken);
 
   const handleClear = useCallback(() => {
     dispatch(combinedPositionActions.reset());
@@ -33,7 +27,7 @@ export const CombinedPositionPanel = memo(function CombinedPositionPanel() {
       <Header>
         <Title>{t('CombinedPosition-Title')}</Title>
         <HeaderActions>
-          <Button variant="ghost" size="sm" onClick={handleClear}>
+          <Button variant="light" size="sm" onClick={handleClear}>
             {t('CombinedPosition-Clear')}
           </Button>
         </HeaderActions>

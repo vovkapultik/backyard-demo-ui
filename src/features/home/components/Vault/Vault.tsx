@@ -15,7 +15,7 @@ import {
   type VaultEntity,
 } from '../../../data/entities/vault.ts';
 import { selectVaultById } from '../../../data/selectors/vaults.ts';
-import { AddToCombinedPositionButton } from './components/AddToCombinedPositionButton/AddToCombinedPositionButton.tsx';
+
 import { styles } from './styles.ts';
 
 const useStyles = legacyMakeStyles(styles);
@@ -40,8 +40,7 @@ export const Vault = memo(function Vault({ vaultId }: VaultProps) {
         isCowcentratedPool && styles.vaultCowcentratedPool,
         isCowcentratedStandard && styles.vaultCowcentratedVault,
         isRetired && styles.vaultRetired,
-        isGov && styles.vaultEarnings,
-        styles.vaultWithButton
+        isGov && styles.vaultEarnings
       )}
     >
       <Link
@@ -53,9 +52,6 @@ export const Vault = memo(function Vault({ vaultId }: VaultProps) {
           <VaultStats vaultId={vaultId} />
         </div>
       </Link>
-      <div className={css(styles.vaultActions)}>
-        <AddToCombinedPositionButton vaultId={vaultId} />
-      </div>
     </div>
   );
 });

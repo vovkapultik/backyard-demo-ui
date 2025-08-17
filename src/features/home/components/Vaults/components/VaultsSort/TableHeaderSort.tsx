@@ -1,44 +1,27 @@
 import { styled } from '@repo/styles/jsx';
 import { memo, useCallback } from 'react';
 import { SortColumnHeader } from '../../../../../../components/SortColumnHeader/SortColumnHeader.tsx';
-import { AVG_APY_PERIODS } from '../../../../../../helpers/apy.ts';
+
 import { useAppDispatch, useAppSelector } from '../../../../../data/store/hooks.ts';
 import type {
   FilteredVaultsState,
   SortType,
-  SortWithSubSort,
 } from '../../../../../data/reducers/filtered-vaults-types.ts';
 import { filteredVaultsActions } from '../../../../../data/reducers/filtered-vaults.ts';
 import {
   selectFilterSearchSortDirection,
   selectFilterSearchSortField,
 } from '../../../../../data/selectors/filtered-vaults.ts';
-import { type FilterSubColumn, SubColumnSort } from './SubColumnSort.tsx';
-
-type SubKeyField<T extends SortType> =
-  T extends SortWithSubSort ? { subKeys: FilterSubColumn<T>[] } : unknown;
 
 type SortColumn = {
-  [K in SortType]: {
-    label: string;
-    value: K;
-  } & SubKeyField<K>;
-}[SortType];
+  label: string;
+  value: SortType;
+};
 
 const SORT_COLUMNS = [
   { label: 'Filter-SortWallet', value: 'walletValue' },
   { label: 'Filter-SortDeposited', value: 'depositValue' },
-  {
-    label: 'Filter-SortApy',
-    value: 'apy',
-    subKeys: [
-      { label: 'Filter-SortApy-default', value: 'default' },
-      ...AVG_APY_PERIODS.map(period => ({
-        label: `Filter-SortApy-avg${period}d`,
-        value: period,
-      })),
-    ],
-  },
+  { label: 'Filter-SortApy', value: 'apy' },
   { label: 'Filter-SortDaily', value: 'daily' },
   { label: 'Filter-SortTvl', value: 'tvl' },
   { label: 'Filter-SortSafety', value: 'safetyScore' },
@@ -62,24 +45,16 @@ export const TableHeaderSort = memo(function TableHeaderSort() {
 
   return (
     <HeaderRow>
-      {SORT_COLUMNS.map(({ label, value, subKeys }) => (
+      {SORT_COLUMNS.map(({ label, value }) => (
         <SortColumnHeader
           key={value}
           label={label}
           sortKey={value}
           sorted={sortField === value ? sortDirection : 'none'}
           onChange={handleSort}
-          before={
-            subKeys && (
-              <SubColumnSort
-                columnSelected={sortField === value}
-                columnKey={value}
-                subColumns={subKeys}
-              />
-            )
-          }
         />
       ))}
+      <ActionHeader />
     </HeaderRow>
   );
 });
@@ -89,6 +64,34 @@ const HeaderRow = styled('div', {
     display: 'grid',
     width: '100%',
     columnGap: '24px',
-    gridTemplateColumns: 'var(--vaults-list-grid-columns)',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    md: {
+      gridTemplateColumns: 'repeat(4, minmax(0, 1fr)) auto',
+    },
+    lg: {
+      gridTemplateColumns: 'repeat(6, minmax(0, 1fr)) auto',
+    },
+  },
+});
+
+const ActionHeader = memo(function ActionHeader() {
+  return (
+    <ActionHeaderContainer>
+      ACTION
+    </ActionHeaderContainer>
+  );
+});
+
+const ActionHeaderContainer = styled('div', {
+  base: {
+    textStyle: 'subline.sm',
+    color: 'text.dark',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    textAlign: 'right',
+    paddingLeft: '16px',
+    paddingRight: '8px',
+    height: '100%',
   },
 });

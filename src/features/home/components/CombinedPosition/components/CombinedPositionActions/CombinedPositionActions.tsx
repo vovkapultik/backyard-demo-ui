@@ -136,46 +136,10 @@ export const CombinedPositionActions = memo(function CombinedPositionActions() {
   }, [validationStatus, chainId, dispatch]);
 
   const handleMultiVaultDeposit = useCallback(() => {
-    if (!selectedToken || !chain || !totalAmount || !vaultEntities.length) {
-      return;
-    }
-
-    // Create deposit steps for each vault
-    vaultEntities.forEach(({ vaultId, allocation, vault }) => {
-      const vaultAmount = totalAmount.multipliedBy(allocation).dividedBy(100);
-      
-      if (vaultAmount.isGreaterThan(BIG_ZERO)) {
-        // Add approval step if needed (for ERC-20 tokens)
-        if (selectedToken.type !== 'native') {
-          dispatch(stepperAddStep({
-            step: {
-              step: 'approve',
-              message: t('Vault-ApproveMsg'),
-              action: `approve-${vaultId}`, // This would need to be replaced with actual approval action
-              pending: false,
-            },
-          }));
-        }
-
-        // Add deposit step
-        dispatch(stepperAddStep({
-          step: {
-            step: 'deposit',
-            message: t('Vault-TxnConfirm', { 
-              type: t('Transact-Deposit') + ` (${vault.name})` 
-            }),
-            action: `deposit-${vaultId}`, // This would need to be replaced with actual deposit action
-            pending: false,
-          },
-        }));
-      }
-    });
-
-    // Start the stepper
-    if (chain) {
-      dispatch(stepperStart(chain.id));
-    }
-  }, [selectedToken, chain, totalAmount, vaultEntities, dispatch, t]);
+    // TODO: Implement multi-vault deposit flow
+    // For now, show a placeholder message instead of crashing
+    alert('Multi-vault deposit feature is not yet implemented. Please use individual vault deposit pages.');
+  }, []);
 
   return (
     <Container>

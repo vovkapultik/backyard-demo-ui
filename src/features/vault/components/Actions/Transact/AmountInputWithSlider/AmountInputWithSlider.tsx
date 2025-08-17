@@ -18,6 +18,8 @@ import { styles } from './styles.ts';
 type AmountInputWithSliderProps = AmountInputProps & {
   endAdornment?: ReactNode;
   warning?: boolean;
+  /** If true, do not disable input/slider based on transact forceSelection */
+  ignoreForceSelection?: boolean;
 };
 
 const useStyles = legacyMakeStyles(styles);
@@ -31,9 +33,11 @@ export const AmountInputWithSlider = memo(function AmountInputWithSlider({
   price,
   endAdornment,
   warning,
+  ignoreForceSelection = false,
 }: AmountInputWithSliderProps) {
   const forceSelection = useAppSelector(selectTransactForceSelection);
   const classes = useStyles();
+  const disabled = ignoreForceSelection ? false : forceSelection;
   const sliderValue = useMemo(() => {
     return value
       .times(100)
@@ -84,11 +88,11 @@ export const AmountInputWithSlider = memo(function AmountInputWithSlider({
         fullWidth={true}
         price={price}
         endAdornment={endAdornment}
-        disabled={forceSelection}
+        disabled={disabled}
         warning={warning}
       />
       <input
-        disabled={forceSelection}
+        disabled={disabled}
         className={css(
           styles.slider,
           (!error || !warning) && styles.sliderBackground,
@@ -109,12 +113,12 @@ export const AmountInputWithSlider = memo(function AmountInputWithSlider({
             className={css(
               styles.itemList,
               item === sliderValue && !error && styles.active,
-              forceSelection && styles.itemDisabled
+              disabled && styles.itemDisabled
             )}
             value={item}
             onClick={handleButtonClick}
             key={`index-${item}`}
-            disabled={forceSelection}
+            disabled={disabled}
           >{`${item}%`}</button>
         ))}
       </div>

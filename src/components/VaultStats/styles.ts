@@ -35,10 +35,10 @@ export const styles = {
     gridTemplateColumns: 'minmax(0, 1fr)',
     columnGap: '8px',
     md: {
-      gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+      gridTemplateColumns: 'repeat(4, minmax(0, 1fr)) auto',
     },
     lg: {
-      gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+      gridTemplateColumns: 'repeat(6, minmax(0, 1fr)) auto auto',
     },
   }),
   columnDashboard: {

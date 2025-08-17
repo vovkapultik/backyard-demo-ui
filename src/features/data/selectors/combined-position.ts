@@ -48,3 +48,40 @@ export const selectCombinedPositionTotalAllocation = createSelector(
   selectCombinedPositionSelectedVaults,
   selectedVaults => selectedVaults.reduce((total, vault) => total + vault.allocation, 0)
 );
+
+export const selectCombinedPositionQuotesStatus = createSelector(
+  selectCombinedPosition,
+  combinedPosition => combinedPosition.quotesStatus
+);
+
+export const selectCombinedPositionQuotesError = createSelector(
+  selectCombinedPosition,
+  combinedPosition => combinedPosition.quotesError
+);
+
+// Selectors for quote triggering (without quote data to prevent loops)
+export const selectCombinedPositionVaultInputs = createSelector(
+  selectCombinedPosition,
+  combinedPosition => combinedPosition.selectedVaults.map(vault => ({
+    vaultId: vault.vaultId,
+    allocation: vault.allocation,
+    amount: vault.amount,
+  }))
+);
+
+export const selectCombinedPositionQuoteTrigger = createSelector(
+  selectCombinedPositionVaultInputs,
+  selectCombinedPositionSelectedToken,
+  selectCombinedPositionTotalAmount,
+  (vaultInputs, selectedToken, totalAmount) => ({
+    vaultInputs,
+    selectedToken,
+    totalAmount,
+    // Create a hash to detect changes
+    hash: JSON.stringify({
+      vaults: vaultInputs.map(v => ({ id: v.vaultId, amount: v.amount?.toString() })),
+      token: selectedToken ? `${selectedToken.chainId}-${selectedToken.address}` : null,
+      total: totalAmount.toString(),
+    })
+  })
+);

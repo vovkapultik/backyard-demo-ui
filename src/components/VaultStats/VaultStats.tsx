@@ -6,6 +6,7 @@ import { VaultDepositStat } from './VaultDepositStat.tsx';
 import { VaultSafetyStat } from './VaultSafetyStat.tsx';
 import { VaultTvlStat } from './VaultTvlStat.tsx';
 import { VaultWalletStat } from './VaultWalletStat.tsx';
+import { VaultActionStat } from './VaultActionStat.tsx';
 
 export type VaultStatsProps = {
   vaultId: VaultEntity['id'];
@@ -20,6 +21,7 @@ export const VaultStats = memo(function VaultStats({ vaultId }: VaultStatsProps)
         <VaultApyStat type="daily" vaultId={vaultId} altAlign="right" altFrom="lg" />
         <VaultTvlStat vaultId={vaultId} altAlign="right" altFrom="lg" />
         <VaultSafetyStat vaultId={vaultId} altAlign="right" altFrom="lg" />
+        <VaultActionStat vaultId={vaultId} />
       </Columns>
     </Align>
   );
@@ -41,6 +43,12 @@ const Columns = styled('div', {
     width: '100%',
     columnGap: '24px',
     rowGap: '24px',
-    gridTemplateColumns: 'var(--vaults-list-grid-columns)',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    md: {
+      gridTemplateColumns: 'repeat(4, minmax(0, 1fr)) auto',
+    },
+    lg: {
+      gridTemplateColumns: 'repeat(6, minmax(0, 1fr)) auto',
+    },
   },
 });

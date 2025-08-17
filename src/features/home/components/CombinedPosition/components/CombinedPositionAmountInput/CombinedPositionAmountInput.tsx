@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from '@repo/styles/jsx';
 import BigNumber from 'bignumber.js';
@@ -6,87 +6,94 @@ import { useAppDispatch, useAppSelector } from '../../../../../data/store/hooks.
 import { combinedPositionActions } from '../../../../../data/reducers/combined-position.ts';
 import { selectCombinedPositionChainId, selectCombinedPositionTotalAmount, selectCombinedPositionSelectedToken } from '../../../../../data/selectors/combined-position.ts';
 import { selectChainById } from '../../../../../data/selectors/chains.ts';
-import { selectTokensByChainId } from '../../../../../data/selectors/tokens.ts';
+import { selectTokensByChainId, selectTokenPriceByAddress } from '../../../../../data/selectors/tokens.ts';
 import { selectUserBalanceOfToken } from '../../../../../data/selectors/balance.ts';
 import { Button } from '../../../../../../components/Button/Button.tsx';
 import { TokenImage } from '../../../../../../components/TokenImage/TokenImage.tsx';
+import { AmountInputWithSlider } from '../../../../../vault/components/Actions/Transact/AmountInputWithSlider/AmountInputWithSlider.tsx';
 import { BIG_ZERO } from '../../../../../../helpers/big-number.ts';
 import { formatTokenDisplayCondensed } from '../../../../../../helpers/format.ts';
 import type { TokenEntity } from '../../../../../data/entities/token.ts';
 import ChevronDownIcon from '../../../../../../images/icons/chevron-down.svg?react';
+import { debounce } from 'lodash-es';
+import { fetchCombinedPositionQuotes } from '../../../../../data/actions/combined-position.ts';
 
 export const CombinedPositionAmountInput = memo(function CombinedPositionAmountInput() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const chainId = useAppSelector(selectCombinedPositionChainId);
-  const totalAmount = useAppSelector(selectCombinedPositionTotalAmount);
   const selectedToken = useAppSelector(selectCombinedPositionSelectedToken);
+  const totalAmount = useAppSelector(selectCombinedPositionTotalAmount);
+  const chainId = useAppSelector(selectCombinedPositionChainId);
+  const [isTokenSelectorOpen, setIsTokenSelectorOpen] = useState(false);
+
+  // Get chain and tokens
   const chain = useAppSelector(state => chainId ? selectChainById(state, chainId) : null);
-  const tokens = useAppSelector(state => {
-    if (!chainId) return [];
-    try {
-      const tokensData = selectTokensByChainId(state, chainId);
-      return tokensData ? Object.values(tokensData.byAddress || {}) : [];
-    } catch (error) {
-      console.warn('Failed to get tokens for chain:', chainId, error);
-      return [];
+  const depositTokens = useAppSelector(state => 
+    chainId ? Object.values(selectTokensByChainId(state, chainId).byAddress || {}) : []
+  );
+  
+  // Get all token balances at once using a single selector
+  const tokenBalances = useAppSelector(state => {
+    const balances: Record<string, BigNumber> = {};
+    for (const token of depositTokens) {
+      balances[token.address] = selectUserBalanceOfToken(state, token.chainId, token.address);
     }
+    return balances;
   });
+
   const balance = useAppSelector(state => 
     selectedToken ? selectUserBalanceOfToken(state, selectedToken.chainId, selectedToken.address) : BIG_ZERO
   );
-  
-  // Get balances for all tokens upfront
-  const tokenBalances = useAppSelector(state => {
-    if (!tokens || tokens.length === 0) {
-      return {};
-    }
-    return tokens.reduce((acc, token) => {
-      acc[token.address] = selectUserBalanceOfToken(state, token.chainId, token.address);
-      return acc;
-    }, {} as Record<string, BigNumber>);
-  });
 
-  const [isTokenSelectorOpen, setIsTokenSelectorOpen] = useState(false);
-  const [amountInput, setAmountInput] = useState(totalAmount.toString());
+  const tokenPrice = useAppSelector(state => 
+    selectedToken ? selectTokenPriceByAddress(state, selectedToken.chainId, selectedToken.address) : BIG_ZERO
+  );
 
   const handleTokenSelect = useCallback((token: TokenEntity) => {
-    const amount = new BigNumber(amountInput || '0');
-    dispatch(combinedPositionActions.setTotalAmount({ amount, token }));
+    dispatch(combinedPositionActions.setTotalAmount({ amount: BIG_ZERO, token }));
     setIsTokenSelectorOpen(false);
-  }, [dispatch, amountInput]);
+  }, [dispatch]);
 
-  const handleAmountChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setAmountInput(value);
-    
+  // Debounced re-quote trigger on amount changes (mimics vault page behavior)
+  const debouncedRequote = useMemo(
+    () =>
+      debounce(
+        (hasToken: boolean, amt: BigNumber) => {
+          if (hasToken && amt.gt(BIG_ZERO)) {
+            dispatch(fetchCombinedPositionQuotes());
+          }
+        },
+        250,
+        { leading: false, trailing: true, maxWait: 1000 }
+      ),
+    [dispatch]
+  );
+
+  const handleAmountChange = useCallback((amount: BigNumber, isMax: boolean) => {
     if (selectedToken) {
-      const amount = new BigNumber(value || '0');
       dispatch(combinedPositionActions.setTotalAmount({ amount, token: selectedToken }));
+      debouncedRequote(true, amount);
     }
-  }, [dispatch, selectedToken]);
+  }, [dispatch, selectedToken, debouncedRequote]);
 
-  const handleMaxClick = useCallback(() => {
-    if (selectedToken) {
-      const maxAmount = balance;
-      setAmountInput(maxAmount.toString());
-      dispatch(combinedPositionActions.setTotalAmount({ amount: maxAmount, token: selectedToken }));
-    }
-  }, [dispatch, selectedToken, balance]);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      debouncedRequote.cancel();
+    };
+  }, [debouncedRequote]);
 
-  if (!chainId || !chain) {
-    return null;
+  if (!chainId) {
+    return <div>No chain selected</div>;
   }
-
-  // Filter tokens to commonly used ones for deposits
-  const depositTokens = tokens.filter(token => 
-    token.type === 'native' || 
-    ['USDC', 'USDT', 'DAI', 'BUSD', 'WETH', 'WBTC'].includes(token.symbol)
-  ).slice(0, 10); // Limit to first 10 tokens
+  
+  if (depositTokens.length === 0) {
+    return <div>Loading tokens...</div>;
+  }
 
   return (
     <Container>
-      <InputRow>
+      <TokenSelectorRow>
         <TokenSelector onClick={() => setIsTokenSelectorOpen(!isTokenSelectorOpen)}>
           {selectedToken ? (
             <>
@@ -98,30 +105,27 @@ export const CombinedPositionAmountInput = memo(function CombinedPositionAmountI
           )}
           <ChevronDownIcon />
         </TokenSelector>
+      </TokenSelectorRow>
 
-        <AmountInputContainer>
-          <AmountInput
-            type="number"
-            placeholder="0.0"
-            value={amountInput}
+      {selectedToken ? (
+        <AmountSection>
+          <AmountInputWithSlider
+            value={totalAmount}
+            maxValue={balance}
             onChange={handleAmountChange}
-            disabled={!selectedToken}
+            tokenDecimals={selectedToken.decimals}
+            price={tokenPrice}
+            ignoreForceSelection={true}
           />
-          {selectedToken && (
-            <MaxButton onClick={handleMaxClick}>
-              {t('Transact-Max')}
-            </MaxButton>
-          )}
-        </AmountInputContainer>
-      </InputRow>
-
-      {selectedToken && (
-        <BalanceRow>
-          <BalanceLabel>{t('Transact-Available')}:</BalanceLabel>
-          <BalanceValue>
-            {formatTokenDisplayCondensed(balance, selectedToken.decimals)} {selectedToken.symbol}
-          </BalanceValue>
-        </BalanceRow>
+          <BalanceRow>
+            <BalanceLabel>Available:</BalanceLabel>
+            <BalanceValue>
+              {formatTokenDisplayCondensed(balance, selectedToken.decimals)} {selectedToken.symbol}
+            </BalanceValue>
+          </BalanceRow>
+        </AmountSection>
+      ) : (
+        <PlaceholderText>Select a token to continue</PlaceholderText>
       )}
 
       {isTokenSelectorOpen && (
@@ -150,11 +154,9 @@ const Container = styled('div', {
   },
 });
 
-const InputRow = styled('div', {
+const TokenSelectorRow = styled('div', {
   base: {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
+    marginBottom: '16px',
   },
 });
 
@@ -162,14 +164,14 @@ const TokenSelector = styled('button', {
   base: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '12px',
     padding: '12px 16px',
     backgroundColor: 'background.content.dark',
     border: '2px solid {colors.background.content.dark}',
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'border-color 0.2s ease',
-    minWidth: '120px',
+    width: '100%',
     justifyContent: 'space-between',
     '&:hover': {
       borderColor: 'primary.main',
@@ -194,74 +196,6 @@ const SelectTokenText = styled('span', {
   base: {
     fontSize: '14px',
     color: 'text.middle',
-  },
-});
-
-const AmountInputContainer = styled('div', {
-  base: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '12px 16px',
-    backgroundColor: 'background.content.dark',
-    border: '2px solid {colors.background.content.dark}',
-    borderRadius: '8px',
-    '&:focus-within': {
-      borderColor: 'primary.main',
-    },
-  },
-});
-
-const AmountInput = styled('input', {
-  base: {
-    flex: 1,
-    background: 'none',
-    border: 'none',
-    color: 'text.light',
-    fontSize: '16px',
-    fontWeight: '500',
-    '&:focus': {
-      outline: 'none',
-    },
-    '&::placeholder': {
-      color: 'text.middle',
-    },
-    '&:disabled': {
-      color: 'text.middle',
-      cursor: 'not-allowed',
-    },
-  },
-});
-
-const MaxButton = styled(Button, {
-  base: {
-    padding: '4px 8px',
-    fontSize: '12px',
-    minHeight: 'auto',
-  },
-});
-
-const BalanceRow = styled('div', {
-  base: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '8px',
-    fontSize: '14px',
-  },
-});
-
-const BalanceLabel = styled('span', {
-  base: {
-    color: 'text.middle',
-  },
-});
-
-const BalanceValue = styled('span', {
-  base: {
-    color: 'text.light',
-    fontWeight: '500',
   },
 });
 
@@ -301,5 +235,44 @@ const TokenBalance = styled('span', {
     marginLeft: 'auto',
     fontSize: '12px',
     color: 'text.middle',
+  },
+});
+
+const PlaceholderText = styled('div', {
+  base: {
+    padding: '20px',
+    textAlign: 'center',
+    color: 'text.middle',
+    fontSize: '14px',
+  },
+});
+
+const AmountSection = styled('div', {
+  base: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+});
+
+const BalanceRow = styled('div', {
+  base: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '12px',
+  },
+});
+
+const BalanceLabel = styled('span', {
+  base: {
+    color: 'text.middle',
+  },
+});
+
+const BalanceValue = styled('span', {
+  base: {
+    color: 'text.light',
+    fontWeight: '500',
   },
 });
