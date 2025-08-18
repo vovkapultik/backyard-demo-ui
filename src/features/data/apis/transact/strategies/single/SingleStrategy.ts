@@ -277,6 +277,8 @@ class SingleStrategyImpl implements IComposableStrategy<StrategyId> {
         state
       );
 
+      console.log("swap FETCHED", JSON.stringify(swap, null, 2));
+      
       const steps: ZapStep[] = [
         {
           target: swap.tx.toAddress,
@@ -291,6 +293,8 @@ class SingleStrategyImpl implements IComposableStrategy<StrategyId> {
         },
       ];
 
+      console.log("NEEDED: steps", JSON.stringify(steps, null, 2));
+
       // Step 2. Deposit to vault
       const vaultDeposit = await this.vaultType.fetchZapDeposit({
         inputs: [
@@ -303,6 +307,8 @@ class SingleStrategyImpl implements IComposableStrategy<StrategyId> {
         from: this.helpers.zap.router,
       });
 
+      console.log("vaultDeposit", JSON.stringify(vaultDeposit, null, 2));
+
       steps.push(vaultDeposit.zap);
 
       // Build order
@@ -310,6 +316,8 @@ class SingleStrategyImpl implements IComposableStrategy<StrategyId> {
         token: getTokenAddress(input.token),
         amount: toWeiString(input.amount, input.token.decimals),
       }));
+
+      console.log("NEEDED: inputs", JSON.stringify(inputs, null, 2));
 
       const requiredOutputs: OrderOutput[] = vaultDeposit.outputs.map(output => ({
         token: getTokenAddress(output.token),
@@ -319,14 +327,20 @@ class SingleStrategyImpl implements IComposableStrategy<StrategyId> {
         ),
       }));
 
+      console.log("requiredOutputs", JSON.stringify(requiredOutputs, null, 2));
+
       // We need to list all inputs, and mid-route outputs, as outputs so dust gets returned
       const dustOutputs: OrderOutput[] = quote.outputs.concat(quote.inputs).map(input => ({
         token: getTokenAddress(input.token),
         minOutputAmount: '0',
       }));
 
+      console.log("dustOutputs", JSON.stringify(dustOutputs, null, 2));
+
       // @dev uniqBy: first occurrence of each element is kept.
       const outputs = uniqBy(requiredOutputs.concat(dustOutputs), output => output.token);
+
+      console.log("NEEDED: outputs", JSON.stringify(outputs, null, 2));
 
       // Perform TX
       const zapRequest: UserlessZapRequest = {
@@ -338,8 +352,13 @@ class SingleStrategyImpl implements IComposableStrategy<StrategyId> {
         steps,
       };
 
+      console.log("zapRequest", JSON.stringify(zapRequest, null, 2));
+
       const expectedTokens = vaultDeposit.outputs.map(output => output.token);
+      console.log("expectedTokens", JSON.stringify(expectedTokens, null, 2));
+
       const walletAction = zapExecuteOrder(quote.option.vaultId, zapRequest, expectedTokens);
+      console.log("walletAction", JSON.stringify(walletAction, null, 2));
 
       return walletAction(dispatch, getState, extraArgument);
     };
